@@ -20,7 +20,7 @@ $(function() {
 
     sr({}).map('/SimpleRouter?no=:no&fcid=:fcid').to(function(params) {
         output(JSON.stringify(params, null, 2));
-        console.log(params);
+        console.log('params:',params);
     }).end().listen();
 
 
@@ -33,6 +33,8 @@ $(function() {
     });
     $('.navigation a').click(function(e) {
         e.preventDefault();
-        sr.nav($(this).attr('href'));
+        var href = $(this).attr('href');
+       // console.log('navigating to', href);
+        sr.nav(href);
     });
 });

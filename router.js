@@ -27,12 +27,12 @@
 /*jshint browser:true*/
 /*jshint jquery:true*/
 /*jshint node:true*/
-(function(factory) {
+(function (factory) {
     'use strict';
     if ('undefined' !== typeof define && define.amd) {
         require([], factory);
     } else if ('undefined' !== typeof define && define.cmd) {
-        define(function(require, exports, module) {
+        define(function (require, exports, module) {
             module.exports = factory();
         });
     } else if ('undefined' !== typeof module && module.exports) {
@@ -40,64 +40,107 @@
     } else if ('undefined' !== typeof window) {
         window.SimpleRouter = factory();
     }
-})(function() {
+})(function () {
 
-    return (function(window, document, $, undefined) {
+    return (function (window, document, $, undefined) {
         'use strict';
 
         var finalPath;
 
         var supports = {
-            pushStateSupported: !!(window.history && window.history.pushState),
+            pushStateSupported: !!window.history.pushState,
             hashChangeSupported: 'onhashchange' in window
         };
 
-        var Url = function(url) {
+        var Url = function (url) {
 
-            if (!url || String !== url.constructor) {
+            if (null === url || undefined === url || String !== url.constructor) {
                 throw new TypeError('"url" must be a string.');
             }
 
-            var handleHash = function(doRemove) {
-                var hashLoc = url.lastIndexOf('#');
-                return hashLoc < 0 ? '' : (doRemove ? (url = url.slice(hashLoc + 1)) : url.slice(hashLoc + 1));
+            var handleHash = function (doRemove) {
+                var hashLoc = url.indexOf('#');
+                return hashLoc < 0 ? '' : (doRemove ? (url = url.slice(0, hashLoc)) : url.slice(
+                    hashLoc + 1));
             };
 
-            var handlePathSearch = function(getSearch) {
+            var handlePathSearch = function (getSearch) {
                 var shadow = this.clone();
                 shadow.removeHash();
                 var askLoc = shadow.getUrl().indexOf('?');
-                return askLoc < 0 ? shadow.getUrl() : (getSearch ? shadow.getUrl().slice(askLoc + 1) : shadow.getUrl()
-                    .slice(0, askLoc));
+                if (getSearch) {
+                    return askLoc < 0 ? '' : shadow.getUrl().slice(askLoc + 1);
+                } else {
+                    return askLoc < 0 ? shadow.getUrl() : shadow.getUrl()
+                        .slice(0, askLoc);
+                }
+
+            };
+
+            var split = function (str) {
+                var search = {};
+                var eqLoc;
+                var searchArray = str.split('&');
+                $.each(searchArray, function (idx, pair) {
+                    if (-1 === (eqLoc = pair.indexOf('='))) {
+                        return;
+                    }
+                    search[pair.slice(0, eqLoc)] = pair.slice(eqLoc + 1);
+                });
+                return search;
             };
 
             $.extend(true, this, {
-                setUrl: function(newUrl) {
+                setUrl: function (newUrl) {
                     return (url = newUrl);
                 },
-                getUrl: function() {
+                getUrl: function () {
                     return url;
                 },
-                getHash: function() {
-                    return handleHash.call(this);
+                getHash: function (splited) {
+                    var hashStr = handleHash.call(this);
+                    if (splited) {
+                        if (hashStr.charAt(0) === '/') {
+                            hashStr = hashStr.slice(1);
+                        }
+                        return split(hashStr);
+                    } else {
+                        return hashStr;
+                    }
                 },
-                removeHash: function() {
+                removeHash: function () {
                     return handleHash.call(this, true);
                 },
-                getPath: function() {
+                getPath: function () {
                     return handlePathSearch.call(this);
                 },
-                getSearch: function() {
-                    return handlePathSearch.call(this, true);
+                getSearch: function (splited) {
+                    var searchStr = handlePathSearch.call(this, true);
+                    if (splited) {
+                        return split(searchStr);
+                    } else {
+                        return searchStr;
+                    }
                 },
-                clone: function() {
+                clone: function () {
                     return new Url(url);
+                },
+                mergeParam: function (params) {
+                    var newSearch = $.extend(this.getSearch(true), params);
+                    var searchArray = [];
+                    var hash;
+                    $.each(newSearch, function (key, val) {
+                        searchArray.push(key + '=' + val);
+                    });
+
+                    url = this.getPath() + '?' + searchArray.join('&') + (hash ? ('#' +
+                        hash) : '');
+                    return this;
                 }
             });
         };
 
-
-        var Path = function() {
+        var Path = function () {
             var self = this;
             var options;
             var routes = {
@@ -109,20 +152,24 @@
 
             var listened = false;
 
-            var match = function(pattern, source) {
+            var match = function (pattern, source) {
                 var reg = /(\w+)=:\1/g;
                 var matches;
-                var ret;
+                var ret = {};
                 var patterns = [];
 
-                if(supports.pushStateSupported){
-                    pattern = new Url(pattern).getSearch();
-                    source = new Url(source).getSearch();
-                }else {
-                    pattern = new Url(pattern).getHash();
-                    source = new Url(source).getHash();
+                var pattUrl = new Url(pattern);
+                pattUrl.removeHash();
+
+                var srcUrl = new Url(source);
+                srcUrl.removeHash();
+
+                if (pattUrl.getPath() !== srcUrl.getPath()) {
+                    return false;
                 }
 
+                pattern = pattUrl.getUrl();
+                source = srcUrl.getUrl();
 
                 while (!!(matches = reg.exec(pattern))) {
                     patterns.push(matches[1]);
@@ -132,7 +179,6 @@
                     var key = patterns[i];
                     var regexp = new RegExp(key + '=([^\?/\\&#]*)');
                     if (regexp.test(source)) {
-                        ret = ret || {};
                         ret[key] = RegExp.$1;
                     }
                 }
@@ -140,8 +186,8 @@
                 return ret;
             };
 
-            var execute = function(path, refresh) {
-                var route, isMatch;
+            var execute = function (path, refresh) {
+                var route, matches;
 
                 if (path === '') {
                     var currentUrl = new Url(options.getCurrentLocation());
@@ -151,9 +197,9 @@
 
                 for (var i in routes.defined) {
                     route = routes.defined[i];
-                    isMatch = match(route.path, path);
-                    if (isMatch) {
-                        route.action.call(route, isMatch, refresh);
+                    matches = match(route.path, path);
+                    if (matches) {
+                        route.action.call(route, matches, refresh);
                         return;
                     }
                 }
@@ -164,7 +210,7 @@
 
             };
 
-            var dispatch = function(path) {
+            var dispatch = function (path) {
                 if (path === routes.current) {
                     return;
                 }
@@ -179,73 +225,110 @@
             };
 
             $.extend(true, this, {
-                init: function(opts) {
+                init: function (opts) {
                     options = $.extend(true, {
                         /**
                          * Ignore 'protocol' & 'host'.
                          *
                          * @return {String}
                          */
-                        getCurrentLocation: function() {
-                            return window.location.href.replace(location.protocol + '://' + location.host, '');
+                        getCurrentLocation: function () {
+                            return window.location.href.replace(location.protocol +
+                                '://' + location.host, '');
                         },
-                        setHash: function(hash) {
+                        setHash: function (hash) {
                             window.location.hash = hash;
                         }
                     }, opts);
+
+                    /* var rootUrl = new Url(options.getCurrentLocation());
+
+                     if (/^\/\w+=[^?&\/=]+/.test(rootUrl.getHash())) {
+                         rootUrl.mergeParam(rootUrl.getHash(true));
+                         //rootUrl.removeHash();
+                         location.href = rootUrl.getUrl();
+                     }*/
+
                     return finalPath;
                 },
-                map: function(path) {
+                map: function (path) {
                     if (!routes.defined[path]) {
                         routes.defined[path] = new Path.Route(path);
                     }
                     return routes.defined[path];
                 },
-                nav: function(path) {
+                /**
+                 * 导航到某一URL，URL应是以"/"开头的路径，可以带参数，
+                 * 但不应带HASH。
+                 *
+                 * @param  {String} path
+                 * @return {this}
+                 */
+                nav: function (path) {
                     if (!listened) {
                         return;
                     }
 
+                    if ('/' !== path.charAt(0)) {
+                        path = '/' + path;
+                    }
+
                     if (supports.pushStateSupported) {
                         window.history.pushState(null, null, path);
+                        //不会触发，必须手动调用
                         dispatch(path);
                     } else if (supports.hashChangeSupported) {
+                        // hash方式会自动除法onhashchange
                         options.setHash(path);
                     } else {
+                        // 这个是轮询，因此也会触发
                         iframe.document.open().close();
                         iframe.location.hash = path;
                     }
+
+                    return this;
                 },
-                listen: function() {
+                updateParams: function (params) {
+                    var currentUrl = new Url(routes.current);
+                    currentUrl.mergeParam(params);
+                    this.nav(currentUrl.getUrl());
+                    return this;
+                },
+                listen: function () {
                     if (listened) {
                         return this;
                     }
 
                     var fn, path;
                     var locationData;
-                    if (this.pushStateSupported) {
-                        fn = function() {
+                    if (supports.pushStateSupported) {
+                        var hashlessUrl = function () {
                             locationData = new Url(options.getCurrentLocation());
                             locationData.removeHash();
-                            dispatch(locationData.getUrl());
+                            return locationData.getUrl();
                         };
-
+                        fn = function () {
+                            dispatch(hashlessUrl());
+                        };
+                        path = hashlessUrl();
                         window.onpopstate = fn;
 
                     } else {
-
+                        path = new Url(options.getCurrentLocation()).getHash();
                         if (supports.hashChangeSupported) {
-                            fn = function() {
+                            fn = function () {
                                 locationData = new Url(options.getCurrentLocation());
                                 dispatch(locationData.getHash());
                             };
                             window.onhashchange = fn;
                         } else {
-                            fn = function() {
+                            fn = function () {
                                 dispatch(new Url(iframe.location).getHash());
                             };
 
-                            iframe = document.createElement('<iframe src="javascript:0" tabindex="-1">');
+                            iframe = document.createElement('iframe');
+                            iframe.src = 'javascript:0';
+                            iframe.tabindex = -1;
                             iframe.style.display = 'none';
                             document.body.appendChild(iframe);
                             iframe = iframe.contentWindow;
@@ -269,18 +352,18 @@
         };
 
         $.extend(Path, {
-            Route: function(path) {
+            Route: function (path) {
                 this.action = null;
                 this.path = path;
             }
         })
 
         Path.Route.prototype = {
-            to: function(fn) {
+            to: function (fn) {
                 this.action = fn;
                 return this;
             },
-            end: function() {
+            end: function () {
                 return finalPath;
             }
         };
@@ -289,7 +372,7 @@
 
         var singletonRouter = new Path();
 
-        finalPath = function() {
+        finalPath = function () {
             return singletonRouter.init.apply(this, arguments);
         };
 
