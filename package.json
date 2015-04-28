@@ -1,0 +1,38 @@
+{
+  "name": "simpleRouter",
+  "version": "1.0.0",
+  "description": "Simple router for browser",
+  "main": "router.js",
+  "scripts": {
+    "test": "karma start"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/yanni4night/simpleRouter.git"
+  },
+  "keywords": [
+    "router"
+  ],
+  "author": "yanni4night@gmail.com",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/yanni4night/simpleRouter/issues"
+  },
+  "homepage": "https://github.com/yanni4night/simpleRouter",
+  "devDependencies": {
+    "grunt": "^0.4.5",
+    "grunt-browserify": "^3.7.0",
+    "grunt-contrib-uglify": "^0.9.1",
+    "grunt-contrib-watch": "^0.6.1",
+    "karma": "^0.12.31",
+    "karma-chrome-launcher": "^0.1.8",
+    "karma-firefox-launcher": "^0.1.4",
+    "karma-ie-launcher": "^0.1.5",
+    "karma-mocha": "^0.1.10",
+    "karma-opera-launcher": "^0.1.0",
+    "karma-safari-launcher": "^0.1.1",
+    "load-grunt-tasks": "^3.1.0",
+    "mocha": "^2.2.4",
+    "time-grunt": "^1.1.1"
+  }
+}
