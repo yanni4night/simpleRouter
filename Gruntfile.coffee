@@ -4,6 +4,11 @@ module.exports = (grunt)->
 
     grunt.initConfig
         pkg: grunt.file.readJSON('./package.json')
+        jshint:
+            options:
+                jshintrc: '.jshintrc'
+            source:
+                src: ['src/*.js']
         browserify:
             dist:
                 files:
@@ -14,8 +19,6 @@ module.exports = (grunt)->
                 src: ['test/*.js'],
                 dest: '.'
         uglify:
-            options:
-                sourceMap: true
             dist:
                 files:
                     'router.js': 'router.js'
@@ -24,4 +27,4 @@ module.exports = (grunt)->
                 files: ['src/{test/,}*.js'],
                 tasks: 'default'
 
-    grunt.registerTask 'default', ['browserify', 'uglify']
+    grunt.registerTask 'default', ['jshint', 'browserify', 'uglify']
