@@ -104,9 +104,9 @@ var Path = function() {
         execute(path);
     };
 
-    $.extend(true, this, {
+    $.extend(this, {
         init: function(opts) {
-            options = $.extend(true, {
+            options = $.extend( {
                 /**
                  * Ignore 'protocol' & 'host'.
                  *
@@ -254,6 +254,6 @@ finalPath = function() {
     return singletonRouter.init.apply(this, arguments);
 };
 
-$.extend(true, finalPath, singletonRouter);
+$.extend( finalPath, singletonRouter);
 
 window.SimpleRouter = finalPath;

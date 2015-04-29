@@ -50,7 +50,7 @@ var Url = function (url) {
         return search;
     };
 
-    $.extend(true, this, {
+    $.extend(this, {
         setUrl: function (newUrl) {
             return (url = newUrl);
         },
