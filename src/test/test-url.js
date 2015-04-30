@@ -1,11 +1,11 @@
 /**
- * Copyright (C) 2015 tieba.baidu.com
+ * Copyright (C) 2015 yanni4night.com
  * test-url.js
  *
  * changelog
  * 2015-04-28[11:02:11]:revised
  *
- * @author yinyong02@baidu.com
+ * @author yanni4night@gmail.com
  * @version 0.1.0
  * @since 0.1.0
  */
@@ -36,6 +36,7 @@ describe('Url', function () {
     describe('#getHash()', function () {
         it('should find the correct hash', function () {
             assert.equal('mark', new Url('/doc/?a=1#mark').getHash());
+            assert.equal('mark?a=1', new Url('/doc/#mark?a=1').getHash());
         });
     });
     describe('#removeHash()', function () {
@@ -48,6 +49,7 @@ describe('Url', function () {
     describe('#getSearch()', function () {
         it('should find the correct search', function () {
             assert.equal('a=1', new Url('/doc/?a=1#mark').getSearch());
+            assert.equal('', new Url('/doc/#mark?a=1').getSearch());
         });
     });
     describe('#getSearch(true)', function () {

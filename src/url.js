@@ -1,11 +1,11 @@
 /**
- * Copyright (C) 2015 tieba.baidu.com
+ * Copyright (C) 2015 yanni4night.com
  * url.js
  *
  * changelog
  * 2015-04-28[10:42:08]:revised
  *
- * @author yinyong02@baidu.com
+ * @author yanni4night@gmail.com
  * @version 0.1.0
  * @since 0.1.0
  */

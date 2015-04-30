@@ -1101,181 +1101,78 @@ module.exports = {
 },{}],7:[function(require,module,exports){
 /**
  * Copyright (C) 2015 yanni4night.com
- * test-url.js
+ * test-$.js
  *
  * changelog
- * 2015-04-28[11:02:11]:revised
+ * 2015-04-30[11:50:45]:revised
  *
  * @author yanni4night@gmail.com
  * @version 0.1.0
  * @since 0.1.0
  */
-var Url = require('../url');
 
 var assert = require('assert');
 
-describe('Url', function () {
-    describe('#getUrl()', function () {
-        it('should get the correct url', function () {
-            var urlStr = '/doc/?a=1#mark';
-            assert.equal(urlStr, new Url(urlStr).getUrl());
-        });
-    });
-    describe('#setUrl()', function () {
-        it('should set the correct url', function () {
-            var url = new Url('');
-            var urlStr = '/doc/?a=1#mark';
-            assert.equal(urlStr, url.setUrl(urlStr));
-            assert.equal(urlStr, url.getUrl());
-        });
-    });
-    describe('#getPath()', function () {
-        it('should find the correct path', function () {
-            assert.equal('/doc/', new Url('/doc/?a=1#mark').getPath());
-        });
-    });
-    describe('#getHash()', function () {
-        it('should find the correct hash', function () {
-            assert.equal('mark', new Url('/doc/?a=1#mark').getHash());
-            assert.equal('mark?a=1', new Url('/doc/#mark?a=1').getHash());
-        });
-    });
-    describe('#removeHash()', function () {
-        it('should remove the hash', function () {
-            var url = new Url('/doc/?a=1#mark');
-            assert.equal('/doc/?a=1', url.removeHash());
-            assert.equal('/doc/?a=1', url.getUrl());
-        });
-    });
-    describe('#getSearch()', function () {
-        it('should find the correct search', function () {
-            assert.equal('a=1', new Url('/doc/?a=1#mark').getSearch());
-            assert.equal('', new Url('/doc/#mark?a=1').getSearch());
-        });
-    });
-    describe('#getSearch(true)', function () {
-        it('should find the correct splited search', function () {
-            var searches = new Url('/doc/?a=1&b=2#mark').getSearch(true);
-            assert.equal('1', searches.a);
-            assert.equal('2', searches.b);
-        });
-    });
-    describe('#mergeParam()', function () {
-        it('should merge search', function () {
-            var url = new Url('/doc/?a=1&b=2#mark');
-            url.mergeParam({
-                b: 3,
-                c: 4
+var $ = require('../$');
+
+describe('$', function () {
+    describe('#each()', function () {
+        it('should foreach every element in array', function () {
+            var index = 0;
+            $.each([2, 3, 4], function (idx, val) {
+                if (1 === ++index) {
+                    assert.deepEqual(idx, 0);
+                    assert.deepEqual(val, 2);
+                }
             });
-            var searches = url.getSearch(true);
-            assert.equal('1', searches.a);
-            assert.equal('3', searches.b);
-            assert.equal('4', searches.c);
-            assert.equal('/doc/', url.getPath());
-            assert.equal('mark', url.getHash());
+        });
+        it('should foreach every element in object', function () {
+            $.each({
+                    a: 1,
+                    b: 2,
+                    c: 3
+                },
+                function (key, val) {
+                    switch (key) {
+                    case 'a':
+                        assert.deepEqual(1, val);
+                        break;
+                    case 'b':
+                        assert.deepEqual(2, val);
+                        break;
+                    case 'c':
+                        assert.deepEqual(3, val);
+                        break;
+                    default:
+                        ;
+                    }
+                });
         });
     });
-    describe('#clone()', function () {
-        it('should clone', function () {
-            var urlStr = '/doc/?a=1#mark';
-            assert.equal(urlStr, new Url(urlStr).clone().getUrl());
+
+    describe('#extend()', function () {
+        var a = {
+            pn: 9
+        };
+
+        var b = $.extend(a, {
+            num: 10
+        }, {
+            pn: 1
         });
+
+        assert.deepEqual(b, a);
+        assert.deepEqual(a.pn, 1);
+        assert.deepEqual(a.num, 10);
+    });
+
+    describe('#isArray()', function () {
+        assert.ok($.isArray([]));
+        assert.ok(!$.isArray({
+            length: 0
+        }));
+        assert.ok(!$.isArray(true));
+        assert.ok(!$.isArray(arguments));
     });
 });
-},{"../url":8,"assert":1}],8:[function(require,module,exports){
-/**
- * Copyright (C) 2015 yanni4night.com
- * url.js
- *
- * changelog
- * 2015-04-28[10:42:08]:revised
- *
- * @author yanni4night@gmail.com
- * @version 0.1.0
- * @since 0.1.0
- */
-
-var $ = require('./$');
-
-var Url = function (url) {
-
-    if (null === url || undefined === url || String !== url.constructor) {
-        throw new TypeError('"url" must be a string.');
-    }
-
-    var handleHash = function (doRemove) {
-        var hashLoc = url.indexOf('#');
-        return hashLoc < 0 ? '' : (doRemove ? (url = url.slice(0, hashLoc)) : url.slice(
-            hashLoc + 1));
-    };
-
-    var handlePathSearch = function (getSearch) {
-        var shadow = this.clone();
-        shadow.removeHash();
-        var askLoc = shadow.getUrl().indexOf('?');
-        if (getSearch) {
-            return askLoc < 0 ? '' : shadow.getUrl().slice(askLoc + 1);
-        } else {
-            return askLoc < 0 ? shadow.getUrl() : shadow.getUrl()
-                .slice(0, askLoc);
-        }
-
-    };
-
-    var split = function (str) {
-        var search = {};
-        var eqLoc;
-        var searchArray = str.split('&');
-        $.each(searchArray, function (idx, pair) {
-            if (-1 === (eqLoc = pair.indexOf('='))) {
-                return;
-            }
-            search[pair.slice(0, eqLoc)] = pair.slice(eqLoc + 1);
-        });
-        return search;
-    };
-
-    $.extend(this, {
-        setUrl: function (newUrl) {
-            return (url = newUrl);
-        },
-        getUrl: function () {
-            return url;
-        },
-        getHash: function () {
-            return handleHash.call(this);
-        },
-        removeHash: function () {
-            return handleHash.call(this, true);
-        },
-        getPath: function () {
-            return handlePathSearch.call(this);
-        },
-        getSearch: function (splited) {
-            var searchStr = handlePathSearch.call(this, true);
-            if (splited) {
-                return split(searchStr);
-            } else {
-                return searchStr;
-            }
-        },
-        clone: function () {
-            return new Url(url);
-        },
-        mergeParam: function (params) {
-            var newSearch = $.extend(this.getSearch(true), params);
-            var searchArray = [];
-            var hash = this.getHash();
-            $.each(newSearch, function (key, val) {
-                searchArray.push(key + '=' + val);
-            });
-
-            url = this.getPath() + '?' + searchArray.join('&') + (hash ? ('#' +
-                hash) : '');
-            return this;
-        }
-    });
-};
-
-module.exports = Url;
-},{"./$":6}]},{},[7]);
+},{"../$":6,"assert":1}]},{},[7]);
