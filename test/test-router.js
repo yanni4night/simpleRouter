@@ -1122,7 +1122,7 @@ var supports = {
 };
 
 
-var Path = function() {
+var Path = function () {
     var options;
     var routes = {
         current: null,
@@ -1133,7 +1133,7 @@ var Path = function() {
 
     var listened = false;
 
-    var match = function(pattern, source) {
+    var match = function (pattern, source) {
         var reg = /(\w+)=:\1/g;
         var matches;
         var ret = {};
@@ -1167,7 +1167,7 @@ var Path = function() {
         return ret;
     };
 
-    var execute = function(path, refresh) {
+    var execute = function (path, refresh) {
         var route, matches;
 
         if (path === '') {
@@ -1191,7 +1191,7 @@ var Path = function() {
 
     };
 
-    var dispatch = function(path) {
+    var dispatch = function (path) {
         if (path === routes.current) {
             return;
         }
@@ -1206,18 +1206,18 @@ var Path = function() {
     };
 
     $.extend(this, {
-        init: function(opts) {
-            options = $.extend( {
+        init: function (opts) {
+            options = $.extend({
                 /**
                  * Ignore 'protocol' & 'host'.
                  *
                  * @return {String}
                  */
-                getCurrentLocation: function() {
+                getCurrentLocation: function () {
                     return window.location.href.replace(location.protocol +
                         '://' + location.host, '');
                 },
-                setHash: function(hash) {
+                setHash: function (hash) {
                     window.location.hash = hash;
                 }
             }, opts);
@@ -1232,7 +1232,7 @@ var Path = function() {
 
             return finalPath;
         },
-        map: function(path) {
+        map: function (path) {
             if (!routes.defined[path]) {
                 routes.defined[path] = new Path.Route(path);
             }
@@ -1245,7 +1245,7 @@ var Path = function() {
          * @param  {String} path
          * @return {this}
          */
-        nav: function(path) {
+        nav: function (path) {
             if (!listened) {
                 return;
             }
@@ -1269,13 +1269,13 @@ var Path = function() {
 
             return this;
         },
-        updateParams: function(params) {
+        updateParams: function (params) {
             var currentUrl = new Url(routes.current);
-            currentUrl.mergeParam(params);
+            currentUrl.mixinSearch(params);
             this.nav(currentUrl.getUrl());
             return this;
         },
-        listen: function() {
+        listen: function () {
             if (listened) {
                 return this;
             }
@@ -1283,12 +1283,12 @@ var Path = function() {
             var fn, path;
             var locationData;
             if (supports.pushStateSupported) {
-                var hashlessUrl = function() {
+                var hashlessUrl = function () {
                     locationData = new Url(options.getCurrentLocation());
                     locationData.removeHash();
                     return locationData.getUrl();
                 };
-                fn = function() {
+                fn = function () {
                     dispatch(hashlessUrl());
                 };
                 path = hashlessUrl();
@@ -1297,13 +1297,13 @@ var Path = function() {
             } else {
                 path = new Url(options.getCurrentLocation()).getHash();
                 if (supports.hashChangeSupported) {
-                    fn = function() {
+                    fn = function () {
                         locationData = new Url(options.getCurrentLocation());
                         dispatch(locationData.getHash());
                     };
                     window.onhashchange = fn;
                 } else {
-                    fn = function() {
+                    fn = function () {
                         dispatch(new Url(iframe.location).getHash());
                     };
 
@@ -1333,29 +1333,29 @@ var Path = function() {
 };
 
 $.extend(Path, {
-    Route: function(path) {
+    Route: function (path) {
         this.action = null;
         this.path = path;
     }
 });
 
 Path.Route.prototype = {
-    to: function(fn) {
+    to: function (fn) {
         this.action = fn;
         return this;
     },
-    end: function() {
+    end: function () {
         return finalPath;
     }
 };
 
 var singletonRouter = new Path();
 
-finalPath = function() {
+finalPath = function () {
     return singletonRouter.init.apply(this, arguments);
 };
 
-$.extend( finalPath, singletonRouter);
+$.extend(finalPath, singletonRouter);
 
 window.SimpleRouter = finalPath;
 },{"./$":6,"./url":9}],8:[function(require,module,exports){
@@ -1417,7 +1417,7 @@ describe('Router', function () {
     });
 
     describe('#updateParams()', function () {
-        it('should get the correct parameters', function (done) {
+        it('should update the correct parameters', function (done) {
 
             sr.nav('time/').map('/time/?num=:num&cid=:cid').to(function (params) {
                 assert.equal(5, params.num);
@@ -1447,6 +1447,13 @@ describe('Router', function () {
 
 var $ = require('./$');
 
+
+/**
+ * 统一资源定位符的包装类。
+ *
+ * @param {String} url
+ * @since 1.0.0
+ */
 var Url = function (url) {
 
     if (null === url || undefined === url || String !== url.constructor) {
@@ -1486,21 +1493,60 @@ var Url = function (url) {
     };
 
     $.extend(this, {
+        /**
+         * 重新设置URL。
+         *
+         * @param {String} newUrl 新的URL
+         * @return {String} 新设置的URL
+         * @since 1.0.0
+         */
         setUrl: function (newUrl) {
             return (url = newUrl);
         },
+        /**
+         * 获取URL。
+         *
+         * @return {String}
+         * @since 1.0.0
+         */
         getUrl: function () {
             return url;
         },
+        /**
+         * 获取Hash值，无Hash则返回空字符串。
+         *
+         * @return {String} Hash值
+         * @since 1.0.0
+         */
         getHash: function () {
             return handleHash.call(this);
         },
+        /**
+         * 移除Hash。
+         *
+         * @return {this}
+         * @since 1.0.0
+         */
         removeHash: function () {
-            return handleHash.call(this, true);
+            handleHash.call(this, true);
+            return this;
         },
+        /**
+         * 获取Path。
+         *
+         * @return {String}
+         * @since 1.0.0
+         */
         getPath: function () {
             return handlePathSearch.call(this);
         },
+        /**
+         * 获取Search参数。
+         *
+         * @param  {[type]} splited 是否解析成对象
+         * @return {String|Object}
+         * @since 1.0.0
+         */
         getSearch: function (splited) {
             var searchStr = handlePathSearch.call(this, true);
             if (splited) {
@@ -1509,19 +1555,62 @@ var Url = function (url) {
                 return searchStr;
             }
         },
+        /**
+         * 克隆一份具有同样URL值的对象。
+         *
+         * @return {Object}
+         * @since 1.0.0
+         */
         clone: function () {
             return new Url(url);
         },
-        mergeParam: function (params) {
+        /**
+         * 更新Search参数。
+         *
+         * @param  {Object} params 新的Search参数键值对
+         * @return {this}
+         */
+        mixinSearch: function (params) {
             var newSearch = $.extend(this.getSearch(true), params);
             var searchArray = [];
             var hash = this.getHash();
+
             $.each(newSearch, function (key, val) {
                 searchArray.push(key + '=' + val);
             });
 
             url = this.getPath() + '?' + searchArray.join('&') + (hash ? ('#' +
                 hash) : '');
+            return this;
+        },
+        /**
+         * 移除指定的Search参数。
+         *
+         * @param  {String|Array} key
+         * @return {this}
+         */
+        removeSearch: function (key) {
+            var newSearch = this.getSearch(true);
+            var searchArray = [];
+            var hash = this.getHash();
+
+            if ($.isArray(key)) {
+                $.each(key, function (idx, k) {
+                    delete newSearch[k];
+                });
+            } else if(!arguments.length){
+                newSearch = {};
+            }else{
+                delete newSearch[key];
+            }
+
+            $.each(newSearch, function (key, val) {
+                searchArray.push(key + '=' + val);
+            });
+
+            url = this.getPath() + '?' + searchArray.join('&') + (hash ? ('#' +
+                hash) : '');
+
             return this;
         }
     });

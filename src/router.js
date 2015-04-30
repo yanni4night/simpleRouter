@@ -21,7 +21,7 @@ var supports = {
 };
 
 
-var Path = function() {
+var Path = function () {
     var options;
     var routes = {
         current: null,
@@ -32,7 +32,7 @@ var Path = function() {
 
     var listened = false;
 
-    var match = function(pattern, source) {
+    var match = function (pattern, source) {
         var reg = /(\w+)=:\1/g;
         var matches;
         var ret = {};
@@ -66,7 +66,7 @@ var Path = function() {
         return ret;
     };
 
-    var execute = function(path, refresh) {
+    var execute = function (path, refresh) {
         var route, matches;
 
         if (path === '') {
@@ -90,7 +90,7 @@ var Path = function() {
 
     };
 
-    var dispatch = function(path) {
+    var dispatch = function (path) {
         if (path === routes.current) {
             return;
         }
@@ -105,18 +105,18 @@ var Path = function() {
     };
 
     $.extend(this, {
-        init: function(opts) {
-            options = $.extend( {
+        init: function (opts) {
+            options = $.extend({
                 /**
                  * Ignore 'protocol' & 'host'.
                  *
                  * @return {String}
                  */
-                getCurrentLocation: function() {
+                getCurrentLocation: function () {
                     return window.location.href.replace(location.protocol +
                         '://' + location.host, '');
                 },
-                setHash: function(hash) {
+                setHash: function (hash) {
                     window.location.hash = hash;
                 }
             }, opts);
@@ -131,7 +131,7 @@ var Path = function() {
 
             return finalPath;
         },
-        map: function(path) {
+        map: function (path) {
             if (!routes.defined[path]) {
                 routes.defined[path] = new Path.Route(path);
             }
@@ -144,7 +144,7 @@ var Path = function() {
          * @param  {String} path
          * @return {this}
          */
-        nav: function(path) {
+        nav: function (path) {
             if (!listened) {
                 return;
             }
@@ -168,13 +168,13 @@ var Path = function() {
 
             return this;
         },
-        updateParams: function(params) {
+        updateParams: function (params) {
             var currentUrl = new Url(routes.current);
-            currentUrl.mergeParam(params);
+            currentUrl.mixinSearch(params);
             this.nav(currentUrl.getUrl());
             return this;
         },
-        listen: function() {
+        listen: function () {
             if (listened) {
                 return this;
             }
@@ -182,12 +182,12 @@ var Path = function() {
             var fn, path;
             var locationData;
             if (supports.pushStateSupported) {
-                var hashlessUrl = function() {
+                var hashlessUrl = function () {
                     locationData = new Url(options.getCurrentLocation());
                     locationData.removeHash();
                     return locationData.getUrl();
                 };
-                fn = function() {
+                fn = function () {
                     dispatch(hashlessUrl());
                 };
                 path = hashlessUrl();
@@ -196,13 +196,13 @@ var Path = function() {
             } else {
                 path = new Url(options.getCurrentLocation()).getHash();
                 if (supports.hashChangeSupported) {
-                    fn = function() {
+                    fn = function () {
                         locationData = new Url(options.getCurrentLocation());
                         dispatch(locationData.getHash());
                     };
                     window.onhashchange = fn;
                 } else {
-                    fn = function() {
+                    fn = function () {
                         dispatch(new Url(iframe.location).getHash());
                     };
 
@@ -232,28 +232,28 @@ var Path = function() {
 };
 
 $.extend(Path, {
-    Route: function(path) {
+    Route: function (path) {
         this.action = null;
         this.path = path;
     }
 });
 
 Path.Route.prototype = {
-    to: function(fn) {
+    to: function (fn) {
         this.action = fn;
         return this;
     },
-    end: function() {
+    end: function () {
         return finalPath;
     }
 };
 
 var singletonRouter = new Path();
 
-finalPath = function() {
+finalPath = function () {
     return singletonRouter.init.apply(this, arguments);
 };
 
-$.extend( finalPath, singletonRouter);
+$.extend(finalPath, singletonRouter);
 
 window.SimpleRouter = finalPath;

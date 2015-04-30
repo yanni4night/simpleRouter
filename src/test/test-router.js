@@ -56,7 +56,7 @@ describe('Router', function () {
     });
 
     describe('#updateParams()', function () {
-        it('should get the correct parameters', function (done) {
+        it('should update the correct parameters', function (done) {
 
             sr.nav('time/').map('/time/?num=:num&cid=:cid').to(function (params) {
                 assert.equal(5, params.num);

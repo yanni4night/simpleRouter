@@ -42,7 +42,8 @@ describe('Url', function () {
     describe('#removeHash()', function () {
         it('should remove the hash', function () {
             var url = new Url('/doc/?a=1#mark');
-            assert.equal('/doc/?a=1', url.removeHash());
+            url.removeHash();
+            assert.equal('', url.getHash());
             assert.equal('/doc/?a=1', url.getUrl());
         });
     });
@@ -59,10 +60,10 @@ describe('Url', function () {
             assert.equal('2', searches.b);
         });
     });
-    describe('#mergeParam()', function () {
+    describe('#mixinSearch()', function () {
         it('should merge search', function () {
             var url = new Url('/doc/?a=1&b=2#mark');
-            url.mergeParam({
+            url.mixinSearch({
                 b: 3,
                 c: 4
             });
@@ -72,6 +73,26 @@ describe('Url', function () {
             assert.equal('4', searches.c);
             assert.equal('/doc/', url.getPath());
             assert.equal('mark', url.getHash());
+        });
+    });
+    describe('#removeSearch()', function () {
+        it('should remove search', function () {
+            var url = new Url('/doc/?a=1&b=2&c=3&d=4#mark');
+            var searches;
+
+            url.removeSearch('c');
+            searches = url.getSearch(true);
+            assert.equal(undefined, searches.c);
+            assert.equal(2, searches.b);
+            
+            url.removeSearch(['a', 'b']);
+            searches = url.getSearch(true);
+            
+            assert.equal(undefined, searches.a);
+            assert.equal(undefined, searches.b);
+            
+            url.removeSearch();
+            assert.equal('', url.getSearch());
         });
     });
     describe('#clone()', function () {
