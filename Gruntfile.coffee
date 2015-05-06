@@ -26,5 +26,12 @@ module.exports = (grunt)->
             dist:
                 files: ['src/{test/,}*.js'],
                 tasks: 'default'
+        coveralls:
+            options:
+                debug: true,
+                coverageDir: 'coverage',
+                dryRun: true,
+                force: true,
+                recursive: true
 
     grunt.registerTask 'default', ['jshint', 'browserify', 'uglify']
